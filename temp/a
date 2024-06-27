@@ -1,0 +1,61 @@
+func findSmallestNonDisjointPaths(paths []string) {
+	for i := 0; i < len(paths); i++ {
+		for j := 0; j < len(paths); j++ {
+
+
+			if i ==j {
+				continue
+			}
+			
+
+	line := paths[i]
+	line2 := paths[j]
+
+
+	fmt.Println("\n\n\n\n\n\nline 1", line)
+	fmt.Println("line 2", line2)
+
+
+	rooms := strings.Split(line, "-")
+	rooms2 := strings.Split(line2, "-")
+
+	if len(rooms)== 2 {
+		fmt.Println("smallest non disjoint paths", rooms)
+		allpathscleaned = append(allpathscleaned, strings.Join(rooms, "-"))
+		return
+	}
+
+	if len(rooms2)== 2 {
+		fmt.Println("smallest non disjoint paths", rooms2)
+		allpathscleaned = append(allpathscleaned, strings.Join(rooms2, "-"))
+		return
+	}
+
+	for i := 1; i < len(rooms)-1; i++ {
+		for j := 1; j < len(rooms2)-1; j++ {
+			fmt.Printf("%s %s\n", rooms[i], rooms2[j])
+
+			if rooms[i] == rooms2[j] {
+				fmt.Println("length of rooms", len(rooms))
+				fmt.Println("length of rooms2", len(rooms2))
+
+				if len(rooms) > len(rooms2) {
+					rooms = nil
+				}
+			}
+		}
+	}
+
+	fmt.Println("asas")
+
+
+	if rooms == nil {
+		fmt.Println("smallest non disjoint paths", rooms2)
+		allpathscleaned = append(allpathscleaned, strings.Join(rooms2, "-"))
+	} else {
+		fmt.Println("smallest non disjoint paths", rooms)
+		allpathscleaned = append(allpathscleaned, strings.Join(rooms, "-"))
+	}
+		}
+	}
+}
