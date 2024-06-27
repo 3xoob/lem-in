@@ -8,10 +8,11 @@ import (
 	"strings"
 )
 
-func ParseFile(filepath string) (*AntFarm, error) {
+func ParseFile(filepath string) *AntFarm {
 	file, err := os.Open(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: failed to open file: %v", err)
+		fmt.Println("ERROR: failed to open file.")
+		os.Exit(1)
 	}
 	defer file.Close()
 
@@ -20,67 +21,73 @@ func ParseFile(filepath string) (*AntFarm, error) {
 		rooms: make(map[string]*Room),
 	}
 
-	var pendingType string
+	var phases string
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
-		if Farm.numberOfAnts == 0 {
-			Farm.numberOfAnts, err = strconv.Atoi(line)
+		if Farm.AntsNum == 0 {
+			Farm.AntsNum, err = strconv.Atoi(line)
 			if err != nil {
-				return nil, fmt.Errorf("ERROR: invalid data format for number of ants")
+				fmt.Println("ERROR: invalid data format for number of ants")
+				os.Exit(0)
 			}
 			continue
 		}
 		if strings.HasPrefix(line, "#") {
 			if line == "##start" {
-				pendingType = "start"
+				phases = "start"
 			} else if line == "##end" {
-				pendingType = "end"
+				phases = "end"
 			}
 			continue
 		}
 
 		if strings.Contains(line, " ") {
-			parts := strings.Split(line, " ")
-			if len(parts) != 3 {
-				return nil, fmt.Errorf("ERROR: invalid data format for room coordinates")
+			coordenaties := strings.Split(line, " ")
+			if len(coordenaties) != 3 {
+				fmt.Println("ERROR: Data format for room coordinates.")
+				os.Exit(0)
 			}
-			x, err := strconv.Atoi(parts[1])
+			xcoord, err := strconv.Atoi(coordenaties[1])
 			if err != nil {
-				return nil, fmt.Errorf("ERROR: invalid data format for coordinates")
+				fmt.Println("ERROR: Data format for coordinates.")
+				os.Exit(0)
 			}
-			y, err := strconv.Atoi(parts[2])
+			ycoord, err := strconv.Atoi(coordenaties[2])
 			if err != nil {
-				return nil, fmt.Errorf("ERROR: invalid data format for coordinates")
+				fmt.Println("ERROR: Data format for coordinates.")
+				os.Exit(0)
 			}
 			room := &Room{
-				name:  parts[0],
-				x:     x,
-				y:     y,
+				name:  coordenaties[0],
+				x:     xcoord,
+				y:     ycoord,
 				links: []*Room{},
 			}
 			Farm.rooms[room.name] = room
-			if pendingType == "start" {
+			if phases == "start" {
 				Farm.startRoom = room
-				pendingType = ""
-			} else if pendingType == "end" {
-				Farm.endRoom = room
-				pendingType = ""
+				phases = ""
+			} else if phases == "end" {
+				Farm.end = room
+				phases = ""
 			}
 			continue
 		}
 
 		if strings.Contains(line, "-") {
-			parts := strings.Split(line, "-")
-			if len(parts) != 2 {
-				return nil, fmt.Errorf("ERROR: invalid data format for link")
+			coordenaties := strings.Split(line, "-")
+			if len(coordenaties) != 2 {
+				fmt.Println("ERROR: Data format for links.")
+				os.Exit(0)
 			}
-			room1, ok1 := Farm.rooms[parts[0]]
-			room2, ok2 := Farm.rooms[parts[1]]
+			room1, ok1 := Farm.rooms[coordenaties[0]]
+			room2, ok2 := Farm.rooms[coordenaties[1]]
 			if !ok1 || !ok2 {
-				return nil, fmt.Errorf("ERROR: invalid link: room not found")
+				fmt.Println("ERROR: Room not found.")
+				os.Exit(0)
 			}
 			room1.links = append(room1.links, room2)
 			room2.links = append(room2.links, room1)
@@ -88,10 +95,12 @@ func ParseFile(filepath string) (*AntFarm, error) {
 	}
 	err = scanner.Err()
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: scanner error")
+		fmt.Println("ERROR: Scanner.")
+		os.Exit(0)
 	}
-	if Farm.startRoom == nil || Farm.endRoom == nil {
-		return nil, fmt.Errorf("ERROR: missing start room or end room")
+	if Farm.startRoom == nil || Farm.end == nil {
+		fmt.Println("ERROR: Missing start or end.")
+		os.Exit(0)
 	}
-	return Farm, nil
+	return Farm
 }

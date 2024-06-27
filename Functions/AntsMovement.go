@@ -6,11 +6,11 @@ func AntsMovement(Paths []*Path, antFarm *AntFarm) {
 	antPath := make(map[int]int)
 	antPosition := make(map[int]int)
 	InPath := make([]int, len(Paths))
-	for antID := 1; antID <= antFarm.numberOfAnts; antID++ {
+	for antID := 1; antID <= antFarm.AntsNum; antID++ {
 		pathIndex := 0
-		minCost := InPath[0] + Paths[0].numberOfRooms
+		minCost := InPath[0] + Paths[0].RoomsNum
 		for i := 1; i < len(Paths); i++ {
-			cost := Paths[i].numberOfRooms + InPath[i]
+			cost := Paths[i].RoomsNum + InPath[i]
 			if minCost > cost {
 				minCost = cost
 				pathIndex = i
@@ -36,7 +36,7 @@ func AntsMovement(Paths []*Path, antFarm *AntFarm) {
 		antMoving = false
 		for pathIndex := 0; pathIndex < len(Paths); pathIndex++ {
 			for j := 0; j < len(antsInside[pathIndex]); j++ {
-				if antPosition[antsInside[pathIndex][j]] < Paths[pathIndex].numberOfRooms-1 {
+				if antPosition[antsInside[pathIndex][j]] < Paths[pathIndex].RoomsNum-1 {
 					antMoving = true
 					antPosition[antsInside[pathIndex][j]]++
 					output += "L"
@@ -50,7 +50,7 @@ func AntsMovement(Paths []*Path, antFarm *AntFarm) {
 		}
 		for pathIndex := 0; pathIndex < len(Paths); pathIndex++ {
 			for len(antsOutside[pathIndex]) != 0 {
-				if antPosition[antsOutside[pathIndex][0]] < Paths[pathIndex].numberOfRooms-1 {
+				if antPosition[antsOutside[pathIndex][0]] < Paths[pathIndex].RoomsNum-1 {
 					antMoving = true
 					antPosition[antsOutside[pathIndex][0]]++
 					output += "L"
