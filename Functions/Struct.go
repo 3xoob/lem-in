@@ -7,13 +7,12 @@ type Room struct {
 }
 
 type Path struct {
-	rooms         []*Room
+	rooms    []*Room
 	RoomsNum int
 }
 
 type AntFarm struct {
-	rooms              map[string]*Room
-	AntsNum       int
+	rooms      map[string]*Room
+	AntsNum    int
 	start, end *Room
-	edgeCase           bool
 }

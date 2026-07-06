@@ -2,7 +2,9 @@ package lemin
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -16,91 +18,121 @@ func ParseFile(filepath string) *AntFarm {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	Farm, err := parseAntFarm(file)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+	return Farm
+}
+
+func parseAntFarm(r io.Reader) (*AntFarm, error) {
+	scanner := bufio.NewScanner(r)
 	Farm := &AntFarm{
 		rooms: make(map[string]*Room),
 	}
 
-	var phases string
+	var phase string
+	antsSet := false
+	linkSeen := make(map[string]bool)
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
-		if Farm.AntsNum == 0 {
-			Farm.AntsNum, err = strconv.Atoi(line)
-			if err != nil {
-				fmt.Println("ERROR: invalid data format for number of ants")
-				os.Exit(0)
+		if !antsSet {
+			n, err := strconv.Atoi(line)
+			if err != nil || n <= 0 {
+				return nil, errors.New("ERROR: invalid data format, invalid number of Ants")
 			}
+			Farm.AntsNum = n
+			antsSet = true
 			continue
 		}
 		if strings.HasPrefix(line, "#") {
 			if line == "##start" {
-				phases = "start"
+				phase = "start"
 			} else if line == "##end" {
-				phases = "end"
+				phase = "end"
 			}
 			continue
 		}
 
 		if strings.Contains(line, " ") {
-			coordenaties := strings.Split(line, " ")
-			if len(coordenaties) != 3 {
-				fmt.Println("ERROR: Data format for room coordinates.")
-				os.Exit(0)
+			fields := strings.Split(line, " ")
+			if len(fields) != 3 {
+				return nil, errors.New("ERROR: invalid data format, room coordinates.")
 			}
-			xcoord, err := strconv.Atoi(coordenaties[1])
+			name := fields[0]
+			if _, exists := Farm.rooms[name]; exists {
+				return nil, errors.New("ERROR: invalid data format, duplicate room name.")
+			}
+			x, err := strconv.Atoi(fields[1])
 			if err != nil {
-				fmt.Println("ERROR: Data format for coordinates.")
-				os.Exit(0)
+				return nil, errors.New("ERROR: invalid data format, room coordinates.")
 			}
-			ycoord, err := strconv.Atoi(coordenaties[2])
+			y, err := strconv.Atoi(fields[2])
 			if err != nil {
-				fmt.Println("ERROR: Data format for coordinates.")
-				os.Exit(0)
+				return nil, errors.New("ERROR: invalid data format, room coordinates.")
 			}
-			room := &Room{
-				name:  coordenaties[0],
-				x:     xcoord,
-				y:     ycoord,
-				links: []*Room{},
-			}
-			Farm.rooms[room.name] = room
-			if phases == "start" {
-				Farm.startRoom = room
-				phases = ""
-			} else if phases == "end" {
+			room := &Room{name: name, x: x, y: y, links: []*Room{}}
+			Farm.rooms[name] = room
+			switch phase {
+			case "start":
+				if Farm.start != nil {
+					return nil, errors.New("ERROR: invalid data format, multiple start rooms.")
+				}
+				Farm.start = room
+				phase = ""
+			case "end":
+				if Farm.end != nil {
+					return nil, errors.New("ERROR: invalid data format, multiple end rooms.")
+				}
 				Farm.end = room
-				phases = ""
+				phase = ""
 			}
 			continue
 		}
 
 		if strings.Contains(line, "-") {
-			coordenaties := strings.Split(line, "-")
-			if len(coordenaties) != 2 {
-				fmt.Println("ERROR: Data format for links.")
-				os.Exit(0)
+			fields := strings.Split(line, "-")
+			if len(fields) != 2 {
+				return nil, errors.New("ERROR: invalid data format, links.")
 			}
-			room1, ok1 := Farm.rooms[coordenaties[0]]
-			room2, ok2 := Farm.rooms[coordenaties[1]]
+			a, b := fields[0], fields[1]
+			if a == b {
+				return nil, errors.New("ERROR: invalid data format, room cannot link to itself.")
+			}
+			room1, ok1 := Farm.rooms[a]
+			room2, ok2 := Farm.rooms[b]
 			if !ok1 || !ok2 {
-				fmt.Println("ERROR: Room not found.")
-				os.Exit(0)
+				return nil, errors.New("ERROR: invalid data format, room not found.")
 			}
+			key := linkKey(a, b)
+			if linkSeen[key] {
+				return nil, errors.New("ERROR: invalid data format, duplicate link.")
+			}
+			linkSeen[key] = true
 			room1.links = append(room1.links, room2)
 			room2.links = append(room2.links, room1)
+			continue
 		}
+
+		return nil, errors.New("ERROR: invalid data format, unrecognized line.")
 	}
-	err = scanner.Err()
-	if err != nil {
-		fmt.Println("ERROR: Scanner.")
-		os.Exit(0)
+	if err := scanner.Err(); err != nil {
+		return nil, errors.New("ERROR: invalid data format, scanner error.")
 	}
-	if Farm.startRoom == nil || Farm.end == nil {
-		fmt.Println("ERROR: Missing start or end.")
-		os.Exit(0)
+	if Farm.start == nil || Farm.end == nil {
+		return nil, errors.New("ERROR: invalid data format, missing start or end room.")
 	}
-	return Farm
+	return Farm, nil
+}
+
+func linkKey(a, b string) string {
+	if a < b {
+		return a + "-" + b
+	}
+	return b + "-" + a
 }

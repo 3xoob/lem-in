@@ -1,8 +1,15 @@
 package lemin
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-func AntsMovement(Paths []*Path, antFarm *AntFarm) {
+// AntsMovement assigns each ant to a path (greedily minimizing, at each
+// assignment, the projected turn on which that ant would finish) and
+// simulates the turn-by-turn movement. It returns one string per turn,
+// each a space-separated list of "Lant-room" moves.
+func AntsMovement(Paths []*Path, antFarm *AntFarm) []string {
 	antPath := make(map[int]int)
 	antPosition := make(map[int]int)
 	InPath := make([]int, len(Paths))
@@ -30,36 +37,29 @@ func AntsMovement(Paths []*Path, antFarm *AntFarm) {
 
 	antsInside := make(map[int][]int)
 	var antMoving bool
-	var output string
+	var turns []string
 
-	for step := 1; ; step++ {
+	for {
+		var moves []string
 		antMoving = false
 		for pathIndex := 0; pathIndex < len(Paths); pathIndex++ {
 			for j := 0; j < len(antsInside[pathIndex]); j++ {
-				if antPosition[antsInside[pathIndex][j]] < Paths[pathIndex].RoomsNum-1 {
+				ant := antsInside[pathIndex][j]
+				if antPosition[ant] < Paths[pathIndex].RoomsNum-1 {
 					antMoving = true
-					antPosition[antsInside[pathIndex][j]]++
-					output += "L"
-					output += fmt.Sprint(antsInside[pathIndex][j])
-					output += "-"
-					output += Paths[pathIndex].rooms[antPosition[antsInside[pathIndex][j]]].name
-					output += " "
-
+					antPosition[ant]++
+					moves = append(moves, fmt.Sprintf("L%d-%s", ant, Paths[pathIndex].rooms[antPosition[ant]].name))
 				}
 			}
 		}
 		for pathIndex := 0; pathIndex < len(Paths); pathIndex++ {
 			for len(antsOutside[pathIndex]) != 0 {
-				if antPosition[antsOutside[pathIndex][0]] < Paths[pathIndex].RoomsNum-1 {
+				ant := antsOutside[pathIndex][0]
+				if antPosition[ant] < Paths[pathIndex].RoomsNum-1 {
 					antMoving = true
-					antPosition[antsOutside[pathIndex][0]]++
-					output += "L"
-					output += fmt.Sprint(antsOutside[pathIndex][0])
-					output += "-"
-					output += Paths[pathIndex].rooms[antPosition[antsOutside[pathIndex][0]]].name
-					output += " "
-					antID := antsOutside[pathIndex][0]
-					antsInside[pathIndex] = append(antsInside[pathIndex], antID)
+					antPosition[ant]++
+					moves = append(moves, fmt.Sprintf("L%d-%s", ant, Paths[pathIndex].rooms[antPosition[ant]].name))
+					antsInside[pathIndex] = append(antsInside[pathIndex], ant)
 					antsOutside[pathIndex] = antsOutside[pathIndex][1:]
 					break
 				}
@@ -68,7 +68,7 @@ func AntsMovement(Paths []*Path, antFarm *AntFarm) {
 		if !antMoving {
 			break
 		}
-		fmt.Println(output)
-		output = ""
+		turns = append(turns, strings.Join(moves, " "))
 	}
+	return turns
 }

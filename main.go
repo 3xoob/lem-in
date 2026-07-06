@@ -40,5 +40,7 @@ func main() {
 		fmt.Println("ERROR: no valid paths found")
 		return
 	}
-	lemin.AntsMovement(PathsNeeded, FarmOfAnt)
+	for _, turn := range lemin.AntsMovement(PathsNeeded, FarmOfAnt) {
+		fmt.Println(turn)
+	}
 }

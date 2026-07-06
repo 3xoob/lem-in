@@ -10,23 +10,7 @@ E 5 9
 a 8 9
 m 8 6
 h 4 6
-A 5 2start-t
-n-e
-a-m
-A-c
-0-o
-E-a
-k-end
-start-h
-o-n
-m-end
-t-E
-start-0
-h-A
-e-end
-c-k
-n-m
-h-n
+A 5 2
 c 8 1
 k 11 2
 ##end
